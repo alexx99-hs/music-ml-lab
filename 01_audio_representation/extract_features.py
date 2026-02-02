@@ -7,16 +7,17 @@ def extract_audio_features(
     n_mfcc: int = 13
 ) -> np.ndarray:
     """
-    Extracts a fixed-length feature vector from an audio file.
+    Extended audio feature extractor.
 
     Features:
-    - MFCC mean (n_mfcc)
-    - MFCC std (n_mfcc)
+    - MFCC mean + std
     - Spectral centroid mean + std
     - Zero-crossing rate mean + std
+    - Chroma mean + std
+    - Tempo (BPM)
 
     Returns:
-    - feature_vector: shape (2*n_mfcc + 4,)
+    - feature_vector
     """
 
     # Load audio
@@ -31,14 +32,26 @@ def extract_audio_features(
     # Zero-crossing rate
     zcr = librosa.feature.zero_crossing_rate(y)
 
-    # Aggregate statistics
+    # Chroma
+    chroma = librosa.feature.chroma_stft(y=y, sr=sr)
+
+    # Tempo
+    tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+
     feature_vector = np.hstack([
         np.mean(mfcc, axis=1),
         np.std(mfcc, axis=1),
+
         np.mean(spectral_centroid),
         np.std(spectral_centroid),
+
         np.mean(zcr),
         np.std(zcr),
+
+        np.mean(chroma, axis=1),
+        np.std(chroma, axis=1),
+
+        tempo
     ])
 
     return feature_vector
